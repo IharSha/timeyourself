@@ -42,7 +42,7 @@ def convert_seconds_to_text(total_seconds):
     minutes = str(minutes) + word_minutes
 
     seconds = total_seconds % 60
-    return '{}{}{}{:.1f} secs'.format(days, hours, minutes, seconds)
+    return '{}{}{}{:.1f} s'.format(days, hours, minutes, seconds)
 
 
 class Timer(Label):
@@ -63,26 +63,28 @@ class MainScreen(StackLayout):
         super().__init__(**kwargs)
         self.spacing = [1, 1]
 
-        self.start_btn = Button(text='Start', size_hint=(1, .07), font_size=12)
-        self.start_btn.bind(on_release=self.clk_start_btn)
+        self.add_timer_btn = Button(text="Add New Timer", size_hint=(.5, .07), font_size=11)
+        self.add_timer_btn.disabled = True
+
+        self.save_and_quit_btn = Button(text='Save and Quit', size_hint=(.5, .07), font_size=11)
+        self.save_and_quit_btn.bind(on_release=self.clk_save_and_quit)
 
         self.timer_name = TextInput(hint_text='Type here what you want to track', size_hint=(.2, .1), font_size=11)
 
-        self.timer = Timer(text='0 days 0 hours 0 minutes 0 secs', size_hint=(.8, .09), font_size=11)
+        self.timer = Timer(size_hint=(.8, .09), font_size=12)
 
-        self.reset_timer_btn = Button(text='Reset', size_hint=(.2, .1), font_size=12)
+        self.reset_timer_btn = Button(text='Reset', size_hint=(.2, .07), font_size=12)
         self.reset_timer_btn.bind(on_release=self.clk_reset_timer_btn)
 
-        self.save_and_quit_btn = Button(text='Save and Quit', size_hint=(1, .07), font_size=12)
-        self.save_and_quit_btn.bind(on_release=self.clk_save_and_quit)
+        self.start_btn = Button(text='Start', size_hint=(.8, .07), font_size=12)
+        self.start_btn.bind(on_release=self.clk_start_btn)
 
-        #self.add_timer_btn = Button(text="Add New Timer", size_hint_y=None)
-        #self.add_widget(self.add_timer_btn)
-        self.add_widget(self.start_btn)
+        self.add_widget(self.add_timer_btn)
+        self.add_widget(self.save_and_quit_btn)
         self.add_widget(self.timer_name)
         self.add_widget(self.timer)
         self.add_widget(self.reset_timer_btn)
-        self.add_widget(self.save_and_quit_btn)
+        self.add_widget(self.start_btn)
 
         self.running = False
 
