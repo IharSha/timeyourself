@@ -18,8 +18,10 @@ Config.set('graphics', 'height', 520)
 Config.set('graphics', 'minimum_width', 400)
 Config.set('graphics', 'minimum_height', 520)
 
+# TODO: scrolling
 
-def convert_seconds_to_text(total_seconds):
+
+def convert_seconds_to_text(total_seconds=0):
     days = int(total_seconds // 86400)
     if days == 1:
         word_days = ' day '
@@ -45,99 +47,131 @@ def convert_seconds_to_text(total_seconds):
     return '{}{}{}{:.1f} s'.format(days, hours, minutes, seconds)
 
 
-class Timer(Label):
+def load_data():
+    try:
+        with open('data', 'rb') as fp:
+            data = pickle.load(fp)
+    except Exception as e:
+        print("Exception when loading data: {}".format(e))
+        return {}
 
+    return data
+
+
+class Timer(StackLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self.padding = [0, 1]
+        self.timer_name = TextInput(hint_text='Type here what you want to track', size_hint=(.25, .5), font_size=11)
+        self.visible_time = Label(text=convert_seconds_to_text(), size_hint=(.75, .5), font_size=11)
+
+        self.start_btn = Button(text='Start', size_hint=(.8, .5), font_size=11)
+        self.start_btn.bind(on_release=self.clk_start_btn)
+
+        self.reset_timer_btn = Button(text='Reset', size_hint=(.1, .5), font_size=11)
+        self.reset_timer_btn.bind(on_release=self.clk_reset_timer_btn)
+
+        self.remove_timer_btn = Button(text='X', size_hint=(.1, .5), font_size=11, background_color=[0.9, 0, 0, 1])
+        self.remove_timer_btn.bind(on_release=self.clk_remove_timer_btn)
+
+        self.add_widget(self.timer_name)
+        self.add_widget(self.visible_time)
+        self.add_widget(self.start_btn)
+        self.add_widget(self.reset_timer_btn)
+        self.add_widget(self.remove_timer_btn)
         self.total_seconds = 0
-        self.stop_time = time.time()
+        self.stop_time = 0
+
+        self.running = False
 
     def update(self, *args):
         self.total_seconds = time.time() - self.stop_time
 
-        self.text = convert_seconds_to_text(self.total_seconds)
-
-
-class MainScreen(StackLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.spacing = [1, 1]
-
-        self.add_timer_btn = Button(text="Add New Timer", size_hint=(.5, .07), font_size=11)
-        self.add_timer_btn.disabled = True
-
-        self.save_and_quit_btn = Button(text='Save and Quit', size_hint=(.5, .07), font_size=11)
-        self.save_and_quit_btn.bind(on_release=self.clk_save_and_quit)
-
-        self.timer_name = TextInput(hint_text='Type here what you want to track', size_hint=(.2, .1), font_size=11)
-
-        self.timer = Timer(size_hint=(.8, .09), font_size=12)
-
-        self.reset_timer_btn = Button(text='Reset', size_hint=(.2, .07), font_size=12)
-        self.reset_timer_btn.bind(on_release=self.clk_reset_timer_btn)
-
-        self.start_btn = Button(text='Start', size_hint=(.8, .07), font_size=12)
-        self.start_btn.bind(on_release=self.clk_start_btn)
-
-        self.add_widget(self.add_timer_btn)
-        self.add_widget(self.save_and_quit_btn)
-        self.add_widget(self.timer_name)
-        self.add_widget(self.timer)
-        self.add_widget(self.reset_timer_btn)
-        self.add_widget(self.start_btn)
-
-        self.running = False
-
-        self.load_data()
+        self.visible_time.text = convert_seconds_to_text(self.total_seconds)
 
     def clk_start_btn(self, obj):
         if self.running:
             self.running = False
-            Clock.unschedule(self.timer.update)
+            Clock.unschedule(self.update)
             self.start_btn.text = "Start"
         else:
             self.running = True
-            self.timer.stop_time = time.time() - self.timer.total_seconds
-            Clock.schedule_interval(self.timer.update, 0.1)
+            self.stop_time = time.time() - self.total_seconds
+            Clock.schedule_interval(self.update, 0.1)
             self.start_btn.text = "Stop"
 
     def clk_reset_timer_btn(self, obj):
         if self.running:
             self.running = False
-            Clock.unschedule(self.timer.update)
+            Clock.unschedule(self.update)
             self.start_btn.text = "Start"
 
-        self.timer.total_seconds = 0
-        self.timer.text = convert_seconds_to_text(self.timer.total_seconds)
+        self.total_seconds = 0
+        self.visible_time.text = convert_seconds_to_text(self.total_seconds)
+
+    def clk_remove_timer_btn(self, obj):
+        self.parent.remove_widget(self)
+        MainScreen.timers.remove(self)
+
+
+class MainScreen(StackLayout):
+    timers = []
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.add_timer_btn = Button(text="Add New Timer", size_hint=(.5, .07), font_size=11)
+        self.add_timer_btn.bind(on_release=self.clk_add_timer_btn)
+
+        self.save_and_quit_btn = Button(text='Save and Quit', size_hint=(.5, .07), font_size=11)
+        self.save_and_quit_btn.bind(on_release=self.clk_save_and_quit)
+
+        self.add_widget(self.add_timer_btn)
+        self.add_widget(self.save_and_quit_btn)
+
+        # load saved data
+        for timer_data in load_data().values():
+            self.create_timer(total_seconds=timer_data['total_seconds'], timer_name=timer_data['timer_name'])
+
+        # auto save
+        Clock.schedule_interval(self.save, 1)
+
+    def clk_add_timer_btn(self, obj):
+        self.create_timer()
+
+    def create_timer(self, total_seconds=0, timer_name=''):
+        timer = Timer(size_hint=(1, .15))
+        timer.total_seconds = total_seconds
+        timer.timer_name.text = timer_name
+        timer.visible_time.text = convert_seconds_to_text(total_seconds)
+
+        self.add_widget(timer)
+        self.timers.append(timer)
 
     def clk_save_and_quit(self, *args):
-        Clock.unschedule(self.timer.update)
-        timer_list = {"total_seconds": self.timer.total_seconds, "timer_name": self.timer_name.text}
+        if self.save():
+            TimeYourselfApp().stop()
+
+    def save(self, *args):
+        timers_dic = {}
+        for t in self.timers:
+            timers_dic[self.timers.index(t)] = {"total_seconds": t.total_seconds, "timer_name": t.timer_name.text}
         try:
             with open('data', 'wb') as fp:
-                pickle.dump(timer_list, fp)
+                pickle.dump(timers_dic, fp)
         except Exception as e:
             print("Exception when saving data: {}".format(e))
         else:
-            TimeYourselfApp().stop()
-
-    def load_data(self):
-        try:
-            with open('data', 'rb') as fp:
-                timer_list = pickle.load(fp)
-                self.timer.total_seconds = timer_list["total_seconds"]
-                self.timer_name.text = timer_list["timer_name"]
-        except Exception as e:
-            print("Exception when loading data: {}".format(e))
-            pass
-
-        self.timer.text = convert_seconds_to_text(self.timer.total_seconds)
+            return True
 
 
 class TimeYourselfApp(App):
     def build(self):
         self.title = 'Time Yourself'
-        return MainScreen()
+        main_screen = MainScreen()
+
+        return main_screen
 
 
 if __name__ == '__main__':
