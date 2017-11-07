@@ -7,4 +7,4 @@ With this program you can add any amount of stopwatches to track how much time d
 
 - To use it just install requirements and run main.py in python.
 
-- You can download windows version from<a href="https://nofile.io/f/XP9GWVQZKvv/timeyourself.zip">here.</a>Unzip archive and open `TimeYourself.exe`. No python needed for this option :)
+- You can download windows version from <a href="https://nofile.io/f/XP9GWVQZKvv/timeyourself.zip">here</a>, unzip archive and open `TimeYourself.exe`. No python needed for this option :)
