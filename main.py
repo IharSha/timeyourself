@@ -1,24 +1,21 @@
-import kivy
-kivy.require('1.10.0')
-
 import time
 import pickle
+import kivy
 
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.stacklayout import StackLayout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.config import Config
-
 Config.set('graphics', 'resizable', False)
-Config.set('graphics', 'width', 400)
-Config.set('graphics', 'height', 520)
-Config.set('graphics', 'minimum_width', 400)
-Config.set('graphics', 'minimum_height', 520)
+from kivy.core.window import Window
+Window.size = (Window.width//2, Window.height//1.1)
 
-# TODO: scrolling
+kivy.require('1.10.0')
 
 
 def convert_seconds_to_text(total_seconds=0):
@@ -58,21 +55,30 @@ def load_data():
     return data
 
 
+class LimitedInput(TextInput):
+
+    def insert_text(self, substring, from_undo=False):
+        if len(self.text) > 25:
+            substring = ''
+        return super(LimitedInput, self).insert_text(substring, from_undo=from_undo)
+
+
 class Timer(StackLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.size_hint_y = None
 
-        self.padding = [0, 1]
-        self.timer_name = TextInput(hint_text='Type here what you want to track', size_hint=(.25, .5), font_size=11)
+        self.timer_name = LimitedInput(hint_text='Type here what you want to track', size_hint=(.25, .5), font_size=11,
+                                       allow_copy=False)
         self.visible_time = Label(text=convert_seconds_to_text(), size_hint=(.75, .5), font_size=11)
 
         self.start_btn = Button(text='Start', size_hint=(.8, .5), font_size=11)
         self.start_btn.bind(on_release=self.clk_start_btn)
 
-        self.reset_timer_btn = Button(text='Reset', size_hint=(.1, .5), font_size=11)
+        self.reset_timer_btn = Button(text='Reset', size_hint=(.15, .5), font_size=11)
         self.reset_timer_btn.bind(on_release=self.clk_reset_timer_btn)
 
-        self.remove_timer_btn = Button(text='X', size_hint=(.1, .5), font_size=11, background_color=[0.9, 0, 0, 1])
+        self.remove_timer_btn = Button(text='X', size_hint=(.05, .5), font_size=11, background_color=[0.9, 0, 0, 1])
         self.remove_timer_btn.bind(on_release=self.clk_remove_timer_btn)
 
         self.add_widget(self.timer_name)
@@ -120,11 +126,15 @@ class MainScreen(StackLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.size_hint_y = None
+        self.bind(minimum_height=self.setter('height'))
 
-        self.add_timer_btn = Button(text="Add New Timer", size_hint=(.5, .07), font_size=11)
+        self.add_timer_btn = Button(text="Add New Timer", size_hint=(.5, None), height=Window.height//12,
+                                    font_size=11)
         self.add_timer_btn.bind(on_release=self.clk_add_timer_btn)
 
-        self.save_and_quit_btn = Button(text='Save and Quit', size_hint=(.5, .07), font_size=11)
+        self.save_and_quit_btn = Button(text='Save and Quit', size_hint=(.5, None), height=Window.height//12,
+                                        font_size=11)
         self.save_and_quit_btn.bind(on_release=self.clk_save_and_quit)
 
         self.add_widget(self.add_timer_btn)
@@ -141,7 +151,7 @@ class MainScreen(StackLayout):
         self.create_timer()
 
     def create_timer(self, total_seconds=0, timer_name=''):
-        timer = Timer(size_hint=(1, .15))
+        timer = Timer(height=Window.height//6.5)
         timer.total_seconds = total_seconds
         timer.timer_name.text = timer_name
         timer.visible_time.text = convert_seconds_to_text(total_seconds)
@@ -166,12 +176,20 @@ class MainScreen(StackLayout):
             return True
 
 
+class MainScroll(ScrollView):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.size_hint = (1, None)
+        self.size = (Window.width, Window.height)
+        self.scroll_timeout = 60
+        self.add_widget(MainScreen())
+
+
 class TimeYourselfApp(App):
     def build(self):
         self.title = 'Time Yourself'
-        main_screen = MainScreen()
-
-        return main_screen
+        return MainScroll()
 
 
 if __name__ == '__main__':
