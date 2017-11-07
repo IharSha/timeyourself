@@ -46,10 +46,10 @@ def convert_seconds_to_text(total_seconds=0):
 
 def load_data():
     try:
-        with open('data', 'rb') as fp:
+        with open('saved_data', 'rb') as fp:
             data = pickle.load(fp)
     except Exception as e:
-        print("Exception when loading data: {}".format(e))
+        print("Exception when loading saved data: {}".format(e))
         return {}
 
     return data
@@ -168,7 +168,7 @@ class MainScreen(StackLayout):
         for t in self.timers:
             timers_dic[self.timers.index(t)] = {"total_seconds": t.total_seconds, "timer_name": t.timer_name.text}
         try:
-            with open('data', 'wb') as fp:
+            with open('saved_data', 'wb') as fp:
                 pickle.dump(timers_dic, fp)
         except Exception as e:
             print("Exception when saving data: {}".format(e))
