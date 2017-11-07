@@ -8,14 +8,14 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.config import Config
 Config.set('graphics', 'resizable', False)
 from kivy.core.window import Window
 Window.size = (Window.width//2, Window.height//1.1)
 
-kivy.require('1.10.0')
+kivy.require('1.9.1')
+FONT_SIZE = 11
 
 
 def convert_seconds_to_text(total_seconds=0):
@@ -49,7 +49,7 @@ def load_data():
         with open('saved_data', 'rb') as fp:
             data = pickle.load(fp)
     except Exception as e:
-        print("Exception when loading saved data: {}".format(e))
+        print("Exception when loading saved data. Oh Man, Oh Jeez!: {}".format(e))
         return {}
 
     return data
@@ -65,20 +65,20 @@ class LimitedInput(TextInput):
 
 class Timer(StackLayout):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(Timer, self).__init__(**kwargs)
         self.size_hint_y = None
 
-        self.timer_name = LimitedInput(hint_text='Type here what you want to track', size_hint=(.25, .5), font_size=11,
-                                       allow_copy=False)
-        self.visible_time = Label(text=convert_seconds_to_text(), size_hint=(.75, .5), font_size=11)
+        self.timer_name = LimitedInput(hint_text='Type here what you want to track', size_hint=(.25, .5),
+                                       font_size=FONT_SIZE, allow_copy=False)
+        self.visible_time = Label(text=convert_seconds_to_text(), size_hint=(.75, .5), font_size=FONT_SIZE)
 
-        self.start_btn = Button(text='Start', size_hint=(.8, .5), font_size=11)
+        self.start_btn = Button(text='Start', size_hint=(.8, .5), font_size=FONT_SIZE)
         self.start_btn.bind(on_release=self.clk_start_btn)
 
-        self.reset_timer_btn = Button(text='Reset', size_hint=(.15, .5), font_size=11)
+        self.reset_timer_btn = Button(text='Reset', size_hint=(.15, .5), font_size=FONT_SIZE)
         self.reset_timer_btn.bind(on_release=self.clk_reset_timer_btn)
 
-        self.remove_timer_btn = Button(text='X', size_hint=(.05, .5), font_size=11, background_color=[0.9, 0, 0, 1])
+        self.remove_timer_btn = Button(text='X', size_hint=(.05, .5), font_size=FONT_SIZE, background_color=[0.9, 0, 0, 1])
         self.remove_timer_btn.bind(on_release=self.clk_remove_timer_btn)
 
         self.add_widget(self.timer_name)
@@ -121,20 +121,30 @@ class Timer(StackLayout):
         MainScreen.timers.remove(self)
 
 
+class MainScroll(ScrollView):
+
+    def __init__(self, **kwargs):
+        super(MainScroll, self).__init__(**kwargs)
+        self.size_hint = (1, None)
+        self.size = (Window.width, Window.height)
+        self.scroll_timeout = 60
+        self.add_widget(MainScreen())
+
+
 class MainScreen(StackLayout):
     timers = []
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(MainScreen, self).__init__(**kwargs)
         self.size_hint_y = None
         self.bind(minimum_height=self.setter('height'))
 
         self.add_timer_btn = Button(text="Add New Timer", size_hint=(.5, None), height=Window.height//12,
-                                    font_size=11)
+                                    font_size=FONT_SIZE)
         self.add_timer_btn.bind(on_release=self.clk_add_timer_btn)
 
         self.save_and_quit_btn = Button(text='Save and Quit', size_hint=(.5, None), height=Window.height//12,
-                                        font_size=11)
+                                        font_size=FONT_SIZE)
         self.save_and_quit_btn.bind(on_release=self.clk_save_and_quit)
 
         self.add_widget(self.add_timer_btn)
@@ -171,19 +181,10 @@ class MainScreen(StackLayout):
             with open('saved_data', 'wb') as fp:
                 pickle.dump(timers_dic, fp)
         except Exception as e:
-            print("Exception when saving data: {}".format(e))
+            print("Exception when saving data. Oh Man, Oh Jeez!: {}".format(e))
         else:
+            # Oh Man, Oh Jeez! People looked trough my code till the end
             return True
-
-
-class MainScroll(ScrollView):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.size_hint = (1, None)
-        self.size = (Window.width, Window.height)
-        self.scroll_timeout = 60
-        self.add_widget(MainScreen())
 
 
 class TimeYourselfApp(App):
@@ -192,5 +193,4 @@ class TimeYourselfApp(App):
         return MainScroll()
 
 
-if __name__ == '__main__':
-    TimeYourselfApp().run()
+TimeYourselfApp().run()
