@@ -9,4 +9,4 @@ kivy.deps.sdl2==0.1.17
 Pygments==2.2.0
 pypiwin32==220
 requests==2.20.0
-urllib3==1.22
+urllib3==1.24
